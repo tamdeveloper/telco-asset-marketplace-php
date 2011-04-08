@@ -36,7 +36,7 @@ class LocationApi
 	
 		$curlOptions = array(
 			CURLOPT_HTTPHEADER => array(
-					'Content-Type: application/json'
+					'Content-Type: application/json')
 				);
 			
 		foreach ($options as $key => $option) 
@@ -44,7 +44,7 @@ class LocationApi
 			$curlOptions[$key] = $option;
 		}
 		
-		$request = new OAuthRequester(TAM_API_GET_LOCATION_URL, 'POST', $tokenResultParams);
+		$request = new OAuthRequester(TAM_API_GET_LOCATION_URL, 'GET', $tokenResultParams);
 		$result = $request->doRequest(0, $curlOptions);
 		if ($result['code'] == 200) 
 		{
@@ -59,8 +59,5 @@ class LocationApi
 	}
 
 }
-
-
-/* vi:set ts=4 sts=4 sw=4 binary noeol: */
 
 ?>
