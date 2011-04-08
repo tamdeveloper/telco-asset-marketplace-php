@@ -1,0 +1,3 @@
+TAM library uses OAuth-php library from http://code.google.com/p/oauth-php/.
+
+Before using TAM library please download the OAuth-php library and put it under "library/oauth" directory.
