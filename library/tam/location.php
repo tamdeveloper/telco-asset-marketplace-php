@@ -30,7 +30,7 @@ require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class LocationApi
 {
-	static function getLocationCoord ($oauth_token, $options = array())
+	static function getCoord ($oauth_token, $options = array())
 	{   
 		$tokenResultParams = array('oauth_token'=> $oauth_token);
 	

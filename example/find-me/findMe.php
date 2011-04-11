@@ -46,6 +46,13 @@ $options = array(
 // storage, such as MySQL.
 OAuthStore::instance("Session", $options);
 
+// The user id of the application user, 
+// 	in this example we assume that there is only one user using the application
+// This is used by the OAuthStore to store OAuth crendentials (e.g. access token) 
+// 	that can be used again in the future for API calls 
+//	without having to do the whole authorization flow again
+$usrId = 0;
+
 $curlOptions = array(
 				CURLOPT_SSL_VERIFYPEER => SSL_VERIFIER);
 
@@ -58,7 +65,7 @@ try
 			'oauth_callback' => APP_CALLBACK_URL);
 			
 		// get a request token
-		$tokenResultParams = OAuthRequester::requestRequestToken(TAM_CONSUMER_KEY, 0, 0, 'GET', $getAuthTokenParams, $curlOptions);
+		$tokenResultParams = OAuthRequester::requestRequestToken(TAM_CONSUMER_KEY, $usrId, 0, 'GET', $getAuthTokenParams, $curlOptions);
 
 		//  redirect to the TAM authorization page, it will redirect back
 		header("Location: " . TAM_AUTHORIZE_URL . "?oauth_token=" . $tokenResultParams['token']);
@@ -73,10 +80,13 @@ try
 			$tokenResultParams = $_GET;
 			
 			try {
-				OAuthRequester::requestAccessToken(TAM_CONSUMER_KEY, $oauthToken, 0, 'GET', $_GET, $curlOptions);
+				OAuthRequester::requestAccessToken(TAM_CONSUMER_KEY, $oauthToken, $usrId, 'GET', $_GET, $curlOptions);
 				
 				$store	= OAuthStore::instance();
-				$session = $store->getSecretsForSignature(0, 0);
+				// get the stored access token for this user
+				$session = $store->getSecretsForSignature(TAM_ACCESS_TOKEN_URL, $usrId);
+				
+				// redirect back to this page but with access token passed as parameter
 				header("Location: " . APP_HOST . "/" . $_SERVER['PHP_SELF'] . "?oauth_token=" . $session['token']);
 			}
 			catch (OAuthException2 $e)
@@ -93,7 +103,7 @@ try
 		{
 			//  STEP 3:  Now we can use obtained access token for API calls
 			
-			$jsonResponse = LocationApi::getLocationCoord($oauthToken, $curlOptions);
+			$jsonResponse = LocationApi::getCoord($oauthToken, $curlOptions);
 			
 			if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 			{
