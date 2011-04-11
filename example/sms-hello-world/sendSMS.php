@@ -104,9 +104,6 @@ try
 			//  STEP 3:  Now we can use obtained access token for API calls
 			
 			// make the send SMS API request.
-			$apiParams = array('body'=>'Hello World SMS');
-			$body = json_encode($apiParams);
-			
 			$jsonResponse = SMSApi::sendSMS($oauthToken, 'Hello World SMS', null, $curlOptions);
 			
 			if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
