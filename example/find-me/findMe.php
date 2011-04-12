@@ -33,25 +33,16 @@ include_once "../../library/oauth/OAuthStore.php";
 include_once "./include/defines.php";
 include_once "../../library/tam/location.php";
 
-//  Init the OAuthStore
-$options = array(
-	'consumer_key' => TAM_CONSUMER_KEY, 
-	'consumer_secret' => TAM_CONSUMER_SECRET,
-	'server_uri' => TAM_OAUTH_HOST,
-	'request_token_uri' => TAM_REQUEST_TOKEN_URL,
-	'authorize_uri' => TAM_AUTHORIZE_URL,
-	'access_token_uri' => TAM_ACCESS_TOKEN_URL
-);
-// Note: do not use "Session" storage in production. Prefer a database
-// storage, such as MySQL.
-OAuthStore::instance("Session", $options);
-
 // The user id of the application user, 
 // 	in this example we assume that there is only one user using the application
 // This is used by the OAuthStore to store OAuth crendentials (e.g. access token) 
 // 	that can be used again in the future for API calls 
 //	without having to do the whole authorization flow again
 $usrId = 0;
+
+// Note: do not use "Session" storage in production. Prefer a database
+// storage, such as MySQL.
+Common::initOAuth("Session", Common::getServerOptions());
 
 $curlOptions = array(
 				CURLOPT_SSL_VERIFYPEER => SSL_VERIFIER);
@@ -103,7 +94,7 @@ try
 		{
 			//  STEP 3:  Now we can use obtained access token for API calls
 			
-			$jsonResponse = LocationApi::getCoord($oauthToken, $curlOptions);
+			$jsonResponse = LocationApi::getCoord($usrId, $curlOptions);
 			
 			if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 			{

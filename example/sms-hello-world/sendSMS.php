@@ -28,23 +28,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-include_once "../../library/oauth/OAuthStore.php";
-
 include_once "./include/defines.php";
 include_once "../../library/tam/sms.php";
-
-//  Init the OAuthStore
-$options = array(
-	'consumer_key' => TAM_CONSUMER_KEY, 
-	'consumer_secret' => TAM_CONSUMER_SECRET,
-	'server_uri' => TAM_OAUTH_HOST,
-	'request_token_uri' => TAM_REQUEST_TOKEN_URL,
-	'authorize_uri' => TAM_AUTHORIZE_URL,
-	'access_token_uri' => TAM_ACCESS_TOKEN_URL
-);
-// Note: do not use "Session" storage in production. Prefer a database
-// storage, such as MySQL.
-OAuthStore::instance("Session", $options);
 
 // The user id of the application user, 
 // 	in this example we assume that there is only one user using the application
@@ -55,6 +40,10 @@ $usrId = 0;
 
 $curlOptions = array(
 				CURLOPT_SSL_VERIFYPEER => SSL_VERIFIER);
+	
+// Note: do not use "Session" storage in production. Prefer a database
+// storage, such as MySQL.
+Common::initOAuth("Session", Common::getServerOptions());
 
 try
 {
@@ -104,7 +93,7 @@ try
 			//  STEP 3:  Now we can use obtained access token for API calls
 			
 			// make the send SMS API request.
-			$jsonResponse = SMSApi::sendSMS($oauthToken, 'Hello World SMS', null, $curlOptions);
+			$jsonResponse = SMSApi::sendSMS($usrId, 'Hello World SMS', null, $curlOptions);
 			
 			if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 			{

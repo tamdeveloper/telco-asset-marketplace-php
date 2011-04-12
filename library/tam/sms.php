@@ -26,14 +26,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+require_once dirname(__FILE__) . "/common.php";
 require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class SMSApi
-{
-	static function sendSMS ($oauth_token, $body, $from = null, $options = array())
+{								
+	static function sendSMS ($usr_id, $body, $from = null, $options = array())
 	{   
-		$tokenResultParams = array('oauth_token'=> $oauth_token);
-	
+		Common::initOAuth();
+		
 		$apiParams = array ('body'=>$body);
 		$body = json_encode($apiParams);
 		
@@ -48,8 +49,8 @@ class SMSApi
 			$curlOptions[$key] = $option;
 		}
 		
-		$request = new OAuthRequester(TAM_API_SEND_SMS_URL, 'POST', $tokenResultParams);
-		$result = $request->doRequest(0, $curlOptions);
+		$request = new OAuthRequester(TAM_API_SEND_SMS_URL, 'POST');
+		$result = $request->doRequest($usr_id, $curlOptions);
 		if ($result['code'] == 200) 
 		{
 			// now we parse the json response from the API call
@@ -63,8 +64,5 @@ class SMSApi
 	}
 
 }
-
-
-/* vi:set ts=4 sts=4 sw=4 binary noeol: */
 
 ?>

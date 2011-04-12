@@ -26,14 +26,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+require_once dirname(__FILE__) . "/common.php";
 require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class LocationApi
 {
-	static function getCoord ($oauth_token, $options = array())
+	static function getCoord ($usr_id, $options = array())
 	{   
-		$tokenResultParams = array('oauth_token'=> $oauth_token);
-	
+		Common::initOAuth();
+		
 		$curlOptions = array(
 			CURLOPT_HTTPHEADER => array(
 					'Content-Type: application/json')
@@ -44,8 +45,8 @@ class LocationApi
 			$curlOptions[$key] = $option;
 		}
 		
-		$request = new OAuthRequester(TAM_API_GET_LOCATION_URL, 'GET', $tokenResultParams);
-		$result = $request->doRequest(0, $curlOptions);
+		$request = new OAuthRequester(TAM_API_GET_LOCATION_COORD_URL, 'GET');
+		$result = $request->doRequest($usr_id, $curlOptions);
 		if ($result['code'] == 200) 
 		{
 			// now we parse the json response from the API call
