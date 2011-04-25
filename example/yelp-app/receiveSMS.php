@@ -45,7 +45,7 @@ define("APP_CALLBACK_URL", APP_URL . "/callback.php");
 
 define("TAM_CONSUMER_KEY", "xxxxxxxxxxxxxxx"); // this is your application consumer key
 define("TAM_CONSUMER_SECRET", "xxxxxxxxxxxxxxx"); // this is your application consumer secret
-define("TAM_OAUTH_HOST", "https://localhost:9443");
+define("TAM_OAUTH_HOST", "https://www.telcoassetmarketplace.com");
 define("TAM_REQUEST_TOKEN_URL", TAM_OAUTH_HOST . "/api/1/oauth/request_token");
 define("TAM_AUTHORIZE_URL", TAM_OAUTH_HOST . "/web/authorize");
 define("TAM_ACCESS_TOKEN_URL", TAM_OAUTH_HOST . "/api/1/oauth/access_token");
