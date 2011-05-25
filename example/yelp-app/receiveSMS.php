@@ -37,35 +37,27 @@ define("SSL_VERIFIER", false); // set this to true for production use
 
 define("YELP_HOST", "http://api.yelp.com");
 define("YELP_BUSINESS_URL", YELP_HOST . "/business_review_search");
-define("YELP_YWSID", "xxxxxxxxxxxxxxxxxxxxxxxx");  // this is your YWSID from Yelp.com
+define("YELP_YWSID", "your_yelp_id");
 
-define("APP_HOST", "http://yoursite.com");
-define("APP_URL", APP_HOST . "/yelp-app");
+define("APP_HOST", "http://localhost");
+define("APP_URL", APP_HOST . "/ext-yelp-php");
 define("APP_CALLBACK_URL", APP_URL . "/callback.php");
 
-define("TAM_CONSUMER_KEY", "xxxxxxxxxxxxxxx"); // this is your application consumer key
-define("TAM_CONSUMER_SECRET", "xxxxxxxxxxxxxxx"); // this is your application consumer secret
-define("TAM_OAUTH_HOST", "https://www.telcoassetmarketplace.com");
-define("TAM_REQUEST_TOKEN_URL", TAM_OAUTH_HOST . "/api/1/oauth/request_token");
-define("TAM_AUTHORIZE_URL", TAM_OAUTH_HOST . "/web/authorize");
-define("TAM_ACCESS_TOKEN_URL", TAM_OAUTH_HOST . "/api/1/oauth/access_token");
-define("TAM_API_URL", TAM_OAUTH_HOST . "/api/1");
-define("TAM_API_SEND_SMS_URL", TAM_API_URL . "/sms/send");
-define("TAM_API_GET_LOCATION_URL", TAM_API_URL . "/location/getcoord");
+define("TAM_CONSUMER_KEY", "your_consumer_key"); // this is your application consumer key
+define("TAM_CONSUMER_SECRET", "your_consumer_secret"); // this is your application consumer secret
 
 define('OAUTH_TMP_DIR', function_exists('sys_get_temp_dir') ? sys_get_temp_dir() : realpath($_ENV["TMP"]));
 
-$options = array(
-	'consumer_key' => TAM_CONSUMER_KEY, 
-	'consumer_secret' => TAM_CONSUMER_SECRET,
-	'server_uri' => TAM_OAUTH_HOST,
-	'request_token_uri' => TAM_REQUEST_TOKEN_URL,
-	'authorize_uri' => TAM_AUTHORIZE_URL,
-	'access_token_uri' => TAM_ACCESS_TOKEN_URL
-);
-OAuthStore::instance("Session", $options);
+// The user id of the application user, 
+// 	in this example we assume that there is only one user using the application
+// This is used by the OAuthStore to store OAuth crendentials (e.g. access token) 
+// 	that can be used again in the future for API calls 
+//	without having to do the whole authorization flow again
+$usrId = 0;
+
 // Note: do not use "Session" storage in production. Prefer a database
 // storage, such as MySQL.
+Common::initOAuth("Session", Common::getServerOptions());
 
 $curlOptions = array(
 			CURLOPT_SSL_VERIFYPEER => SSL_VERIFIER);
@@ -77,7 +69,11 @@ try
 	$parsedBody = json_decode($body);		
 	$oauthAccessToken = $parsedBody->access_token;
 	$oauthTokenSecret = $parsedBody->token_secret;
-		
+	
+	//only for debug
+	//error_log("Access Token: " . $oauthAccessToken . "", 0);
+	//error_log("Token Secret: " . $oauthTokenSecret . "", 0);
+	
 	// STEP 2:  Get the SMS message from the incoming SMS
 	$smsMessage = $parsedBody->body;
 	$stringToken = explode(' ', $smsMessage, 2);
@@ -86,13 +82,15 @@ try
 	// STEP 3: Add access token to the OAuth Store
 	$store = OAuthStore::instance();
     $opts = array();
-	$store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthAccessToken, $oauthTokenSecret, 0, $opts);
+	$store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthAccessToken, $oauthTokenSecret, $usrId, $opts);
 
 	// STEP 4:  Get current geo Location.			
-	$jsonResponse = LocationApi::getLocationCoord($oauthAccessToken, $curlOptions);			
+	$jsonResponse = LocationApi::getCoord($usrId, $curlOptions);			
 	if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 	{
 		echo 'Error occured while get the location: ' . $jsonResponse->status->message;
+		//only for debug
+		//error_log('Error occured while get the location: ' . $jsonResponse->status->message . '', 0);
 	} 
 	else 
 	{
@@ -101,6 +99,8 @@ try
 			'longitude' => $jsonResponse->body->longitude,			
 		);
 		echo 'Location successfully retrieved';		
+		//only for debug	
+		//error_log('Location successfully retrieved ('. 'latitude  : ' . $location['latitude'] . ', longitude : ' . $location['longitude'] . ')', 0);
 	}
 	
 	// STEP 5:  Get the YELP business review info
@@ -108,27 +108,36 @@ try
 	if ($yelpResult['http_code'] == 200) 
 	{
 		$smsReply = build_sms_message($yelpResult['content']);
+		//only for debug
+		//error_log('Response from Yelp: ' . $smsReply . '', 0);
 			
 	} else 
 	{
-		$smsReply = "Sorry, problem was found. Try again later.";
+		$smsReply = 'Sorry, problem was found. Try again later.';
+		//only for debug	
+		//error_log('Error occured while get YELP info ', 0);
 	}
 
 	// STEP 6:  Send or reply the SMS to the subscriber using TAM Send SMS API.			
-	$jsonResponse = SMSApi::sendSMS($oauthAccessToken, $smsReply, null, $curlOptions);
+	$jsonResponse = SMSApi::sendSMS($usrId, $smsReply, null, $curlOptions);
 			
 	if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 	{
 		echo 'Error occured while sending SMS: ' . $jsonResponse->status->message;
+		//only for debug
+		//error_log('Error occured while sending SMS: ' . $jsonResponse->status->message . '', 0);
 	} 
 	else 
 	{
 		echo 'SMS successfully sent';
+		//only for debug	
+		//error_log('SMS successfully sent', 0);
 	}
 	
 }
 catch(OAuthException2 $e) {
 	echo "OAuthException:  " . $e->getMessage();
+	//error_log("OAuthException:  " . $e->getMessage()."", 0);
 	var_dump($e);
 }
 
@@ -156,6 +165,8 @@ function get_yelp_info( $keywords, $location, $radius, $limit )
     );
     	
     $url = YELP_BUSINESS_URL . '?' . http_build_query($httpQuery);   	
+   	//only for debug
+	//error_log("yelp URL: " . $url . "", 0);
 
     $ch      = curl_init( $url );
     curl_setopt_array( $ch, $options );
@@ -179,15 +190,15 @@ function build_sms_message( $yelpJsonResponse )
  
 	foreach($obj->businesses as $business):
 		$count = $count + 1;
-		$msgContent = $msgContent . $count . ". " . $business->name . ", " . $business->address1 . " " . $business->address2 . "\n";
+		$msgContent = $msgContent . $count . ". " . $business->name . ', ' . $business->address1 . ' ' . $business->address2 . '\n';
 	endforeach;
 	
 	if ($count == 0)
 	{
-		$smsMessage = "We found no matches near You. Sorry.";
+		$smsMessage = 'We found no matches near You. Sorry.';
 	} else
 	{
-		$smsMessage = "We found " . $count . " matches near You:\n" . $msgContent;
+		$smsMessage = 'We found ' . $count . ' matches near You:\n' . $msgContent;
 	}
 	
 	return $smsMessage;
