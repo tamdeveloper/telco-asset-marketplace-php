@@ -28,10 +28,10 @@
  * THE SOFTWARE.
  */
 
-include_once "./library/oauth/OAuthStore.php";
-include_once "./library/oauth/OAuthRequester.php";
-include_once "./library/tam/sms.php";
-include_once "./library/tam/location.php";
+include_once "../../library/oauth/OAuthStore.php";
+include_once "../../library/oauth/OAuthRequester.php";
+include_once "../../library/tam/sms.php";
+include_once "../../library/tam/location.php";
 
 define("SSL_VERIFIER", false); // set this to true for production use
 
