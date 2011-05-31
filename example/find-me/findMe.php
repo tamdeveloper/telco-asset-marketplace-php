@@ -47,9 +47,10 @@ Common::initOAuth("Session", Common::getServerOptions(), $curlOptions);
 
 try
 {
-	//  STEP 1:  If we do not have an OAuth token yet, go get one
 	if (empty($_GET["oauth_token"])) 
 	{
+		//  STEP 1:  If we do not have an OAuth token yet, go get one
+		
 		Common::requestRequestToken($usrId, APP_CALLBACK_URL);
 	} 
 	else 
@@ -58,15 +59,16 @@ try
 		{
 			//  STEP 2:  Get an access token
 		
-			// get request token first
+			// get request token and verifier first
 			$oauthToken = $_GET["oauth_token"];
+			$oauthVerifier = $_GET["oauth_verifier"];
 			
-			$oauth_token = Common::requestAccessToken($usrId, $oauthToken, $_GET["oauth_verifier"]);
+			$accessToken = Common::requestAccessToken($usrId, $oauthToken, $oauthVerifier);
 			
 			// in this example we will redirect back to this page but with oauth_token param specified
 			// to show that once access token retrieved, we can use it in the future for directly call TAM APIs
 			$appUrl = APP_HOST . "/" . $_SERVER['PHP_SELF'];
-			header("Location: " . $appUrl . "?oauth_token=" . $oauth_token);
+			header("Location: " . $appUrl . "?oauth_token=" . $accessToken);
 		} 
 		else 
 		{
