@@ -65,8 +65,7 @@ try
 	$yelpKeyword = $stringToken[1];
 	
 	// STEP 3: Add access token to the OAuth Store
-	$store = OAuthStore::instance();
-    $store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthAccessToken, $oauthTokenSecret, $usrId);
+	Common::storeAccessToken($usrId, $oauthAccessToken, $oauthTokenSecret);
 
 	// STEP 4:  Get current geo Location.			
 	$jsonResponse = LocationApi::getCoord($usrId);			

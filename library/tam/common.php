@@ -127,6 +127,12 @@ class Common
 		return $oauth['token'];
 	}
 	
+	static function storeAccessToken($usrId, $oauthToken, $tokenSecret) 
+	{
+		$store = OAuthStore::instance();
+    	$store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthToken, $tokenSecret, $usrId);
+	}
+	
 	static function resetOAuth () 
 	{
 		// to be called if the application has updated consumer key without the need of restarting the application server
