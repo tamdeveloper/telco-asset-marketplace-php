@@ -27,20 +27,17 @@
  */
 
 require_once dirname(__FILE__) . "/common.php";
-require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class LocationApi
 {
-	static function getCoord ($usr_id, $options = array())
+	static function getCoord ($usr_id)
 	{   
-		Common::initOAuth();
-		
 		$curlOptions = array(
 			CURLOPT_HTTPHEADER => array(
 					'Content-Type: application/json')
 				);
 			
-		foreach ($options as $key => $option) 
+		foreach (Common::getCurlOptions() as $key => $option) 
 		{
 			$curlOptions[$key] = $option;
 		}

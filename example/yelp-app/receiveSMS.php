@@ -28,25 +28,10 @@
  * THE SOFTWARE.
  */
 
-include_once "../../library/oauth/OAuthStore.php";
-include_once "../../library/oauth/OAuthRequester.php";
+include_once "./include/defines.php";
 include_once "../../library/tam/sms.php";
 include_once "../../library/tam/location.php";
 
-define("SSL_VERIFIER", false); // set this to true for production use
-
-define("YELP_HOST", "http://api.yelp.com");
-define("YELP_BUSINESS_URL", YELP_HOST . "/business_review_search");
-define("YELP_YWSID", "your_yelp_id");
-
-define("APP_HOST", "http://localhost");
-define("APP_URL", APP_HOST . "/ext-yelp-php");
-define("APP_CALLBACK_URL", APP_URL . "/callback.php");
-
-define("TAM_CONSUMER_KEY", "your_consumer_key"); // this is your application consumer key
-define("TAM_CONSUMER_SECRET", "your_consumer_secret"); // this is your application consumer secret
-
-define('OAUTH_TMP_DIR', function_exists('sys_get_temp_dir') ? sys_get_temp_dir() : realpath($_ENV["TMP"]));
 
 // The user id of the application user, 
 // 	in this example we assume that there is only one user using the application
@@ -55,12 +40,12 @@ define('OAUTH_TMP_DIR', function_exists('sys_get_temp_dir') ? sys_get_temp_dir()
 //	without having to do the whole authorization flow again
 $usrId = 0;
 
-// Note: do not use "Session" storage in production. Prefer a database
-// storage, such as MySQL.
-Common::initOAuth("Session", Common::getServerOptions());
-
 $curlOptions = array(
 			CURLOPT_SSL_VERIFYPEER => SSL_VERIFIER);
+			
+// Note: do not use "Session" storage in production. Prefer a database
+// storage, such as MySQL.
+Common::initOAuth("Session", Common::getServerOptions(), $curlOptions);
 
 try
 {
@@ -81,11 +66,10 @@ try
 	
 	// STEP 3: Add access token to the OAuth Store
 	$store = OAuthStore::instance();
-    $opts = array();
-	$store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthAccessToken, $oauthTokenSecret, $usrId, $opts);
+    $store->addServerToken(TAM_CONSUMER_KEY, 'access', $oauthAccessToken, $oauthTokenSecret, $usrId);
 
 	// STEP 4:  Get current geo Location.			
-	$jsonResponse = LocationApi::getCoord($usrId, $curlOptions);			
+	$jsonResponse = LocationApi::getCoord($usrId);			
 	if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 	{
 		echo 'Error occured while get the location: ' . $jsonResponse->status->message;
@@ -119,7 +103,7 @@ try
 	}
 
 	// STEP 6:  Send or reply the SMS to the subscriber using TAM Send SMS API.			
-	$jsonResponse = SMSApi::sendSMS($usrId, $smsReply, null, $curlOptions);
+	$jsonResponse = SMSApi::sendSMS($usrId, $smsReply);
 			
 	if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 	{

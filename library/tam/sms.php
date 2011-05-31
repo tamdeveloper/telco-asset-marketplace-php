@@ -27,14 +27,11 @@
  */
 
 require_once dirname(__FILE__) . "/common.php";
-require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class SMSApi
 {								
-	static function sendSMS ($usr_id, $body, $from = null, $options = array())
+	static function sendSMS ($usr_id, $body, $from = null)
 	{   
-		Common::initOAuth();
-		
 		$apiParams = array ('body'=>$body);
 		$body = json_encode($apiParams);
 		
@@ -44,7 +41,7 @@ class SMSApi
 				),
 			CURLOPT_POSTFIELDS => $body);
 			
-		foreach ($options as $key => $option) 
+		foreach (Common::getCurlOptions() as $key => $option) 
 		{
 			$curlOptions[$key] = $option;
 		}

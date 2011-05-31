@@ -38,6 +38,7 @@ define("TAM_API_SEND_SMS_URL", TAM_API_URL . "/sms/send");
 define("TAM_API_GET_LOCATION_COORD_URL", TAM_API_URL . "/location/getcoord");
 
 require_once dirname(__FILE__) . "/../oauth/OAuthStore.php";
+require_once dirname(__FILE__) . "/../oauth/OAuthRequester.php";
 
 class Common 
 {
@@ -51,10 +52,12 @@ class Common
 									'signature_methods' => 'HMAC-SHA1'
 								);
 								
+	static private $curlOptions = array();
+								
 	static private $initiated = false;								
 								
-	static function initOAuth ($store = 'MySQL', $options = array())
-	{
+	static function initOAuth ($store = 'MySQL', $options = array(), $curlOptions = array())
+	{	
 		//  Init the OAuthStore
 		$store = OAuthStore::instance($store, $options);
 	
@@ -77,10 +80,51 @@ class Common
 				// server not found, create it
 				$store->updateServer(Common::$server, null);
 			}
+			
+			if (!empty($curlOptions)) 
+			{
+				Common::$curlOptions = $curlOptions;
+			}
+		
 			Common::$initiated = true;
 		}
 		
 		return $store;
+	}
+	
+	static function requestRequestToken($usrId, $callbackUrl = "")
+	{
+		// get a request token
+		$tokenResultParams = OAuthRequester::requestRequestToken(TAM_CONSUMER_KEY, $usrId, 0, 'GET', null, Common::$curlOptions);
+
+		//  redirect to the TAM authorization page, it will redirect back
+		$callback = "";
+		if (!empty($callbackUrl)) 
+		{
+			$callback = "&oauth_callback=" . $callbackUrl;
+		}
+		header("Location: " . TAM_AUTHORIZE_URL . "?oauth_token=" . $tokenResultParams['token'] . $callback);
+	}
+	
+	static function requestAccessToken($usrId, $oauthToken, $oauthVerifier = "")
+	{
+		if (!empty($oauthVerifier)) 
+		{
+			$getAuthTokenParams = array(
+				'oauth_verifier' => $oauthVerifier);
+		}
+		else 
+		{
+			$getAuthTokenParams = null;
+		}
+			
+		OAuthRequester::requestAccessToken(TAM_CONSUMER_KEY, $oauthToken, $usrId, 'GET', $getAuthTokenParams, Common::$curlOptions);
+				
+		$store	= OAuthStore::instance();
+		// get the stored access token for this user
+		$oauth = $store->getSecretsForSignature(TAM_ACCESS_TOKEN_URL, $usrId);
+		
+		return $oauth['token'];
 	}
 	
 	static function resetOAuth () 
@@ -92,6 +136,11 @@ class Common
 	static function getServerOptions()
 	{
 		return Common::$server;
+	}
+	
+	static function getCurlOptions()
+	{
+		return Common::$curlOptions;
 	}
 }
 

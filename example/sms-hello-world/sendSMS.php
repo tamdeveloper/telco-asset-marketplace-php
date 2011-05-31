@@ -43,57 +43,37 @@ $curlOptions = array(
 	
 // Note: do not use "Session" storage in production. Prefer a database
 // storage, such as MySQL.
-Common::initOAuth("Session", Common::getServerOptions());
+Common::initOAuth("Session", Common::getServerOptions(), $curlOptions);
 
 try
 {
 	//  STEP 1:  If we do not have an OAuth token yet, go get one
 	if (empty($_GET["oauth_token"])) 
 	{
-		$getAuthTokenParams = array(
-			'oauth_callback' => APP_CALLBACK_URL);
-			
-		// get a request token
-		$tokenResultParams = OAuthRequester::requestRequestToken(TAM_CONSUMER_KEY, $usrId, 0, 'GET', $getAuthTokenParams, $curlOptions);
-
-		//  redirect to the TAM authorization page, it will redirect back
-		header("Location: " . TAM_AUTHORIZE_URL . "?oauth_token=" . $tokenResultParams['token']);
+		Common::requestRequestToken($usrId, APP_CALLBACK_URL);
 	} 
 	else 
-	{
-		$oauthToken = $_GET["oauth_token"];
-			
+	{		
 		if (!empty($_GET["oauth_verifier"])) 
 		{
 			//  STEP 2:  Get an access token
-			$tokenResultParams = $_GET;
 			
-			try {
-				OAuthRequester::requestAccessToken(TAM_CONSUMER_KEY, $oauthToken, $usrId, 'GET', $_GET, $curlOptions);
-				
-				$store	= OAuthStore::instance();
-				// get the stored access token for this user
-				$session = $store->getSecretsForSignature(TAM_ACCESS_TOKEN_URL, $usrId);
-				
-				// redirect back to this page but with access token passed as parameter
-				header("Location: " . APP_HOST . "/" . $_SERVER['PHP_SELF'] . "?oauth_token=" . $session['token']);
-			}
-			catch (OAuthException2 $e)
-			{
-				var_dump($e);
-				// Something wrong with the oauth_token.
-				// Could be:
-				// 1. Was already ok
-				// 2. We were not authorized
-				return;
-			}
+			// get request token first
+			$oauthToken = $_GET["oauth_token"];
+			
+			$oauth_token = Common::requestAccessToken($usrId, $oauthToken, $_GET["oauth_verifier"]);
+			
+			// in this example we will redirect back to this page but with oauth_token param specified
+			// to show that once access token retrieved, we can use it in the future for directly call TAM APIs
+			$appUrl = APP_HOST . "/" . $_SERVER['PHP_SELF'];
+			header("Location: " . $appUrl . "?oauth_token=" . $oauth_token);
 		} 
 		else 
 		{
 			//  STEP 3:  Now we can use obtained access token for API calls
 			
 			// make the send SMS API request.
-			$jsonResponse = SMSApi::sendSMS($usrId, 'Hello World SMS', null, $curlOptions);
+			$jsonResponse = SMSApi::sendSMS($usrId, 'Hello World SMS');
 			
 			if (is_null($jsonResponse) || $jsonResponse->status->code != 0) 
 			{
