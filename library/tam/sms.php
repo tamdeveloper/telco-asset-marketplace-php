@@ -30,9 +30,17 @@ require_once dirname(__FILE__) . "/common.php";
 
 class SMSApi
 {								
-	static function sendSMS ($usr_id, $body, $from = null)
+	static function sendSMS ($usr_id, $body, $from = null, $transaction_id = null)
 	{   
 		$apiParams = array ('body'=>$body);
+		if (!empty($from)) 
+		{
+			$apiParams['from'] = $from;
+		}
+		if (!empty($transaction_id)) 
+		{
+			$apiParams['transaction_id'] = $transaction_id;
+		}
 		$body = json_encode($apiParams);
 		
 		$curlOptions = array(
