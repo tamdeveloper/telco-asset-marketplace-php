@@ -1,11 +1,5 @@
 ------------
-# Overview #
+# Repository moved #
 ------------
-This is a PHP Wrapper for Telco Asset Marketplace (TAM) APIs. For more information about TAM APIs please visit our developer community page at https://code.telcoassetmarketplace.com. 
 
-----------------
-# Dependencies #
-----------------
-OAuth
-- TAM library uses OAuth-php library from http://code.google.com/p/oauth-php/. 
-- Before using TAM library please download the OAuth-php library and put all files under "library" to "library/oauth" directory of TAM. E.g. cp -R [oauth-php-dir]/library [tam-php-dir]/library/oauth.
+Checkout https://github.com/creatary/creatary-js-sdk
